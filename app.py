@@ -5,13 +5,13 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 
 
 #################################################
 # Database Setup
 #################################################
-engine = create_engine("sqlite:///db/schedule_abr.sqlite")
+engine = create_engine('sqlite:///db/schedule_abr.sqlite', connect_args={'check_same_thread': False}, echo=False)
 
 # reflect an existing database into a new model
 Base = automap_base()
@@ -21,7 +21,7 @@ Base.prepare(engine, reflect=True)
 # Save reference to the tables
 Schedule = Base.classes.nba_2018_2019_schedule_logo
 TodayPredictions = Base.classes.today_predictions
-#Stats = Base.classes.stats
+Stats = Base.classes.stats
 
 # Create our session (link) from Python to the DB
 session = Session(engine)
@@ -37,6 +37,11 @@ app = Flask(__name__)
 #################################################
 
 @app.route("/")
+def index():
+    """Return the homepage."""
+    return render_template("index.html")
+
+@app.route("/available_routes")
 def welcome():
     """List all available api routes."""
     return (
@@ -95,6 +100,29 @@ def t_predictions():
         today_games.append(t_game_dict)
 
     return jsonify(today_games)
+
+@app.route("/stats")
+def t_stats():
+    """Return a list of data for today's games including our predictions for each game"""
+    # Query all teams' four factors stats
+    results = session.query(Stats).all()
+
+    # Create a dictionary from the row data and append to a list of all_games
+    today_stats = []
+    for t_stat in results:
+        t_stat_dict = {}
+        t_stat_dict["Team_abbr"] = t_stat.Team_abbr
+        t_stat_dict["Offense_eFG"] = t_stat.Offense_eFG
+        t_stat_dict["Defense_eFG"] = t_stat.Defense_eFG
+        t_stat_dict["Offense_TOV"] = t_stat.Offense_TOV
+        t_stat_dict["Defense_TOV"] = t_stat.Defense_TOV
+        t_stat_dict["Offense_ORB"] = t_stat.Offense_ORB
+        t_stat_dict["Defense_DRB"] = t_stat.Defense_DRB
+        t_stat_dict["Offense_FtFga"] = t_stat.Offense_FtFga
+        t_stat_dict["Defense_FtFga"] = t_stat.Defense_FtFga
+        today_stats.append(t_stat_dict)
+
+    return jsonify(today_stats)
 
     
 
