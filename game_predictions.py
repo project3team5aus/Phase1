@@ -102,9 +102,18 @@ teams = ['ATL', 'BOS', 'BRK', 'CHO', 'CHI', 'CLE', 'DAL', 'DEN', 'DET',
          'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS',
          'TOR', 'UTA', 'WAS']
 
-executable_path = {'executable_path': 'chromedriver.exe'}
-browser = Browser('chrome', **executable_path, headless=False)
+# load web pages without loading images in selenium
+from selenium import webdriver
 
+chromeOptions = webdriver.ChromeOptions()
+prefs = {'profile.managed_default_content_settings.images':2}
+chromeOptions.add_experimental_option("prefs", prefs)
+driver = webdriver.Chrome(chrome_options=chromeOptions)
+
+executable_path = {'executable_path': 'chromedriver.exe'}
+browser = Browser('chrome', **executable_path, headless=False, options=chromeOptions)
+
+# loop to start the scraping of the stats
 team_list = []
 x = 0 
 while x == 0:
